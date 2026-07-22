@@ -19,7 +19,28 @@ git clone https://github.com/NanoNets/ami.git && cd ami
 - It installs dependencies (pnpm via corepack)
 - builds the console and starts the server
 
-Open http://localhost:4141 and walk through onboarding. Paste your Claude API key and connect tools using personal tokens. Both are stored only on this machine.
+Open http://localhost:4141 and walk through onboarding. Configure your model and connect tools using personal tokens. Both are stored only on this machine.
+
+Ami speaks the Anthropic Messages API as a protocol. Switching provider is a single change in Settings → Models:
+
+- API key — your provider's key (Anthropic's by default).
+- Base URL — leave blank for Anthropic, or point it at any Anthropic-compatible endpoint.
+- Model for triage & task runs — the main model (default `claude-opus-4-8`). Free-text: any model name your endpoint serves.
+- Model for memory agents — the cheap/utility model (default `claude-sonnet-4-6`). It runs on every substantive signal, so on a local setup this is the knob to point at a small model.
+
+The Claude Agent SDK honors the base URL, and its internal small-model calls are remapped to your utility model. Structured outputs automatically fall back to schema-prompted JSON on non-Anthropic endpoints, so compat providers work without tweaks.
+
+Hosted open models - Kimi, GLM, DeepSeek, and MiniMax all publish Anthropic-compatible base URLs (e.g. `https://api.moonshot.ai/anthropic` for Kimi). Set the base URL, their key, and their model names.
+
+Fully local — put a LiteLLM proxy in front of Ollama / vLLM / llama.cpp; it exposes the Anthropic protocol:
+
+```sh
+ollama pull qwen3:32b
+pip install 'litellm[proxy]'
+litellm --model ollama/qwen3:32b     # Anthropic-compatible endpoint on :4000
+```
+
+Then in Settings → Models: base URL `http://localhost:4000`, model `ollama/qwen3:32b` for both knobs (or a smaller model for memory agents), and any placeholder key if the proxy has no auth. With connectors polling local-first, nothing leaves your machine at all.
 
 ```sh
 ./ami update       # pull the latest, reinstall, rebuild
