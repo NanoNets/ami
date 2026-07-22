@@ -1,0 +1,111 @@
+#!/usr/bin/env node
+/** The one command to run Ami:
+ *
+ *   ./ami            install deps (first run), build the console, start on :4141
+ *   ./ami build      force-rebuild the console
+ *   ./ami update     pull the latest, reinstall, rebuild
+ *
+ * Needs Node >= 20; everything else (pnpm via corepack, deps, console build)
+ * is bootstrapped automatically and idempotently.
+ */
+import { spawn, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const cmd = process.argv[2] ?? "start";
+
+const major = parseInt(process.versions.node.split(".")[0], 10);
+if (major < 20) {
+  console.error(`ami needs Node 20 or newer (you have ${process.versions.node}). Get it at https://nodejs.org`);
+  process.exit(1);
+}
+
+/** pnpm from PATH when present, otherwise through corepack (ships with Node). */
+function pnpmCmd() {
+  const probe = spawnSync("pnpm", ["--version"], { stdio: "ignore", shell: process.platform === "win32" });
+  if (probe.status === 0) return ["pnpm"];
+  const corepack = spawnSync("corepack", ["--version"], { stdio: "ignore", shell: process.platform === "win32" });
+  if (corepack.status === 0) return ["corepack", "pnpm"];
+  console.error("ami needs pnpm. Enable it with: corepack enable   (or: npm install -g pnpm)");
+  process.exit(1);
+}
+
+function run(args, label) {
+  console.log(`\n▸ ${label}`);
+  const [bin, ...pre] = pnpm;
+  const res = spawnSync(bin, [...pre, ...args], {
+    cwd: root,
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+  if (res.status !== 0) {
+    console.error(`\n${label} failed.`);
+    process.exit(res.status ?? 1);
+  }
+}
+
+const pnpm = pnpmCmd();
+
+function newestMtime(dir) {
+  let newest = 0;
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === "node_modules" || entry.name === "dist") continue;
+    const p = path.join(dir, entry.name);
+    const t = entry.isDirectory() ? newestMtime(p) : fs.statSync(p).mtimeMs;
+    if (t > newest) newest = t;
+  }
+  return newest;
+}
+
+function ensureDeps() {
+  if (!fs.existsSync(path.join(root, "node_modules"))) {
+    run(["install"], "Installing dependencies (first run)");
+  }
+}
+
+function ensureConsole(force = false) {
+  const consoleDir = path.join(root, "apps", "console");
+  const marker = path.join(consoleDir, "dist", "index.html");
+  const stale = !fs.existsSync(marker) || newestMtime(path.join(consoleDir, "src")) > fs.statSync(marker).mtimeMs;
+  if (force || stale) {
+    run(["--filter", "@ami/console", "build"], "Building the console");
+  }
+}
+
+if (cmd === "update") {
+  console.log("\n▸ Pulling the latest");
+  const res = spawnSync("git", ["pull", "--ff-only"], { cwd: root, stdio: "inherit" });
+  if (res.status !== 0) process.exit(res.status ?? 1);
+  run(["install"], "Installing dependencies");
+  ensureConsole(true);
+  console.log("\nUp to date. Start with: ./ami");
+  process.exit(0);
+}
+
+if (cmd === "build") {
+  ensureDeps();
+  ensureConsole(true);
+  process.exit(0);
+}
+
+if (cmd !== "start") {
+  console.error(`unknown command "${cmd}" — use: ./ami [start|build|update]`);
+  process.exit(1);
+}
+
+ensureDeps();
+ensureConsole();
+
+console.log("\n▸ Starting ami on http://localhost:" + (process.env.AMI_PORT ?? "4141"));
+const [bin, ...pre] = pnpm;
+const child = spawn(bin, [...pre, "--filter", "@ami/server", "start"], {
+  cwd: root,
+  stdio: "inherit",
+  shell: process.platform === "win32",
+});
+for (const sig of ["SIGINT", "SIGTERM"]) {
+  process.on(sig, () => child.kill(sig));
+}
+child.on("exit", (code) => process.exit(code ?? 0));

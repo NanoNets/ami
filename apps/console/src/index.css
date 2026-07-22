@@ -1,0 +1,198 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap");
+@import "tailwindcss";
+
+/* Design language: nanonets.com — DM Sans, light #f0f0f0 canvas, white surfaces,
+   warm hairline borders, near-black type, single #546fff accent, soft 4px corners.
+
+   Motion language: calm ≠ inert. Nothing loops or pulses uninvited (the pending-
+   question badge is the sole exception), but everything responds when acted on
+   and everything that changes state moves through the change. Timing discipline:
+   150–250ms, ease-out entering, ease-in exiting, transform+opacity only. */
+@theme {
+  --color-ink: #f0f0f0; /* page background */
+  --color-panel: #ffffff; /* cards */
+  --color-panel2: #f7f6f3; /* inset surfaces */
+  --color-edge: #dedbd6; /* soft hairline */
+  --color-edge2: #c9c6c2; /* stronger hairline */
+  --color-mut: #6b6b6b;
+  --color-hi: #131315;
+  --color-acc: #546fff;
+  --color-accd: #3a4db2;
+  --color-ok: #15803d;
+  --color-warn: #b45309;
+  --color-bad: #dc2626;
+
+  --font-sans: "DM Sans", ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-soft: 4px;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes shimmer {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+body {
+  @apply bg-ink text-hi antialiased;
+  font-family: var(--font-sans);
+}
+
+/* Keyboard navigation is first-class: every interactive element gets the same
+   visible focus ring (mouse clicks don't trigger :focus-visible, so this adds
+   zero noise for pointer users). */
+:focus-visible {
+  outline: 2px solid var(--color-acc);
+  outline-offset: 1px;
+}
+
+/* Motion is a courtesy, not a requirement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.card {
+  @apply bg-panel border border-edge2 rounded-soft;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+}
+
+.btn {
+  @apply px-3.5 py-1.5 text-sm font-normal border border-edge2 bg-panel text-hi rounded-soft hover:border-hi cursor-pointer disabled:opacity-40 disabled:cursor-default;
+  transition:
+    color 150ms,
+    background-color 150ms,
+    border-color 150ms,
+    transform 100ms ease-out;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  @apply bg-acc border-acc text-white hover:bg-accd hover:border-accd;
+}
+
+/* Two small sizes only: 12px (text-xs) for meta text, 10px for chips. */
+.chip {
+  @apply inline-flex items-center px-2 py-0.5 text-[10px] border border-edge bg-panel2 text-mut rounded-soft;
+}
+
+.input {
+  @apply w-full bg-panel border border-edge2 rounded-soft px-3 py-2 text-sm outline-none focus:border-acc placeholder:text-mut/70;
+  transition: border-color 150ms;
+}
+
+/* List rows that navigate: a 2px accent bar slides in on the left so lists
+   feel navigable, not just tinted. */
+.row-link {
+  transition:
+    background-color 150ms,
+    box-shadow 150ms;
+}
+.row-link:hover {
+  box-shadow: inset 2px 0 0 var(--color-acc);
+}
+
+/* One-time entrance for content that just arrived. Rows cascade with
+   .rise-stagger on the parent (caps at 6 — beyond that the eye reads it as
+   one group anyway). */
+/* Fill-mode `backwards`, not `both`: the `to` state matches the natural state,
+   and holding a transform after the animation would leave every row its own
+   stacking context — clipping dropdowns under the next card. */
+.rise {
+  animation: rise 180ms ease-out backwards;
+}
+.rise-stagger > * {
+  animation: rise 180ms ease-out backwards;
+}
+.rise-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.rise-stagger > *:nth-child(2) {
+  animation-delay: 35ms;
+}
+.rise-stagger > *:nth-child(3) {
+  animation-delay: 70ms;
+}
+.rise-stagger > *:nth-child(4) {
+  animation-delay: 105ms;
+}
+.rise-stagger > *:nth-child(5) {
+  animation-delay: 140ms;
+}
+.rise-stagger > *:nth-child(n + 6) {
+  animation-delay: 175ms;
+}
+
+/* Exit for a resolved/dismissed row: fade + slide, then the caller removes the
+   node after ROW_EXIT_MS. Height collapse via grid-template-rows keeps the
+   list from jumping mid-animation. */
+.row-exit {
+  animation: row-exit 200ms ease-in both;
+  pointer-events: none;
+}
+@keyframes row-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+
+/* Three quiet dots for "ami is thinking" — the one place a loop is earned,
+   because it marks live work happening right now. */
+.typing-dot {
+  @apply inline-block w-1 h-1 rounded-full bg-mut;
+  animation: typing 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}

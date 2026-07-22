@@ -1,0 +1,20 @@
+{
+  "name": "@ami/triage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ami/db": "workspace:*",
+    "@ami/memory": "workspace:*",
+    "@ami/shared": "workspace:*",
+    "@anthropic-ai/sdk": "^0.110.0",
+    "zod": "^4.4.3",
+    "@ami/connectors": "workspace:*",
+    "drizzle-orm": "^0.45.2"
+  }
+}

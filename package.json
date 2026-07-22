@@ -1,0 +1,24 @@
+{
+  "name": "ami",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node ./ami",
+    "dev": "pnpm --filter @ami/console build && pnpm --filter @ami/server dev",
+    "dev:server": "pnpm --filter @ami/server dev",
+    "dev:console": "pnpm --filter @ami/console dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --no-bail test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "tsx": "^4.23.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}
