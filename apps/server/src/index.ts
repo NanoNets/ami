@@ -110,6 +110,10 @@ if (fs.existsSync(consoleDist)) {
 
 startScheduler(db);
 
+// Warm the shared browser server so the first turn that needs it doesn't pay
+// the cold-start wait (the browser window itself stays lazy until first use).
+void import("@ami/engine").then(({ startBrowserMcp }) => startBrowserMcp());
+
 // AWS self-connects from the local CLI (~/.aws) when credentials work — no
 // manual connect step, and it survives onboarding wipes. Writes stay
 // approval-gated regardless of how the connector was registered.

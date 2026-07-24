@@ -241,6 +241,7 @@ async function executeRun(
           workspaceDir: ctx.workspaceDir,
         })
       : undefined;
+    const browser = await browserMcpServer();
     const res = await runAgentSession(db, {
       prompt: ctx.prompt,
       options: {
@@ -267,7 +268,7 @@ async function executeRun(
             defaultChannel: ctx.defaultChannel,
             defaultTargetRef: ctx.defaultTargetRef,
           }),
-          browser: browserMcpServer(),
+          browser,
         },
         systemPrompt: {
           type: "preset",

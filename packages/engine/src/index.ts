@@ -26,3 +26,4 @@ export {
   transcribeAudio,
 } from "./meetings/recorder.js";
 export { startConnectorBuild, connectorBuilds, type ConnectorBuild } from "./connector-builder.js";
+export { startBrowserMcp } from "./browser-mcp.js";

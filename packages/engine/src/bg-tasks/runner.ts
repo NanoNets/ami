@@ -179,6 +179,7 @@ export async function runBackgroundTask(
       deniedWrites: [path.join(taskDir(slug), "task.yaml"), path.join(taskDir(slug), "runs.log")],
     });
 
+    const browser = await browserMcpServer();
     const res = await runAgentSession(db, {
       prompt: message,
       options: {
@@ -201,7 +202,7 @@ export async function runBackgroundTask(
           ...(codeTools.length > 0
             ? { amicode: createSdkMcpServer({ name: "amicode", tools: codeTools }) }
             : {}),
-          browser: browserMcpServer(),
+          browser,
         },
         systemPrompt: BG_SYSTEM,
         maxTurns: 60,
