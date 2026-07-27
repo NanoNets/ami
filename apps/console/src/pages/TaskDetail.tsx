@@ -1,7 +1,7 @@
 import { Fragment, useState, type ReactElement, type ReactNode } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { ArtifactDto, DraftDto, TaskRunDto, TaskStepDto, TodoDto } from "@ami/shared";
+import { worktreeBranchForTodo, type ArtifactDto, type DraftDto, type TaskRunDto, type TaskStepDto, type TodoDto } from "@ami/shared";
 import { api } from "../lib/api";
 import { timeAgo } from "../lib/time";
 import { toast, errMsg } from "../lib/toast";
@@ -84,7 +84,7 @@ export default function TaskDetail() {
           <TaskRunsSection todo={todo} runs={runs} steps={steps} activeRun={activeRun} />
         </div>
         <div className="space-y-6">
-          <ArtifactPanel artifacts={artifacts} />
+          <ArtifactPanel artifacts={artifacts} todo={todo} />
           <DraftPanel drafts={drafts} />
         </div>
       </div>
@@ -448,10 +448,11 @@ const artifactIcon: Record<string, ReactElement> = {
   meeting_link: <VideoIcon />,
   post: <MegaphoneIcon />,
   file: <PaperclipIcon />,
+  branch: <BranchIcon />,
   other: <BoxIcon />,
 };
 
-function ArtifactPanel({ artifacts }: { artifacts: ArtifactDto[] }) {
+function ArtifactPanel({ artifacts, todo }: { artifacts: ArtifactDto[]; todo: TodoDto | undefined }) {
   const [open, setOpen] = useState<string | null>(null);
   return (
     <section>
@@ -486,11 +487,32 @@ function ArtifactPanel({ artifacts }: { artifacts: ArtifactDto[] }) {
                   <Markdown>{a.contentMd}</Markdown>
                 </div>
               )}
+              {a.type === "branch" && todo?.projectId && <MergeBackButton todo={todo} />}
             </div>
           ))}
         </div>
       )}
     </section>
+  );
+}
+
+/** Merge the coding run's ami/<task> worktree branch back into the project's
+ * checkout — the manual step after a worktree run, right on its deliverable. */
+function MergeBackButton({ todo }: { todo: TodoDto }) {
+  const merge = useMutation({
+    mutationFn: () => api.mergeBack(todo.projectId!, worktreeBranchForTodo(todo.id)),
+    onSuccess: (res) => (res.ok ? toast(res.message) : toast.error(res.message)),
+    onError: (e) => toast.error(errMsg(e)),
+  });
+  return (
+    <div className="border-t border-edge mt-2 pt-2 flex items-center gap-2">
+      <button className="btn text-xs" disabled={merge.isPending} onClick={() => merge.mutate()}>
+        {merge.isPending ? "Merging…" : "Merge back"}
+      </button>
+      <span className="text-xs text-mut">
+        Merges <code>{worktreeBranchForTodo(todo.id)}</code> into your checkout's current branch.
+      </span>
+    </div>
   );
 }
 

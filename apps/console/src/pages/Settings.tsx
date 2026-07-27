@@ -102,11 +102,6 @@ export default function Settings() {
       </section>
 
       <section>
-        <h2 className="text-sm uppercase tracking-wider text-mut mb-3">Code projects</h2>
-        <ProjectsCard />
-      </section>
-
-      <section>
         <h2 className="text-sm uppercase tracking-wider text-mut mb-3">LLM usage</h2>
         <UsageCard />
       </section>
@@ -342,84 +337,6 @@ function RecorderCard() {
             <option value="de">German</option>
           </select>
         </label>
-      </div>
-    </div>
-  );
-}
-
-function ProjectsCard() {
-  const qc = useQueryClient();
-  const { data: projects = [] } = useQuery({ queryKey: ["projects"], queryFn: api.projects });
-  const [path, setPath] = useState("");
-  const [mergeBranch, setMergeBranch] = useState<Record<string, string>>({});
-
-  return (
-    <div className="card p-4 space-y-3">
-      <p className="text-xs text-mut">
-        Registered local repos. Coding tasks pinned to a project run in an isolated git worktree on an
-        ami/&lt;task&gt; branch — your checkout stays untouched until you merge back.
-      </p>
-      {projects.map((p) => (
-        <div key={p.id} className="flex items-center gap-2 text-sm border-t border-edge pt-2">
-          <span className="font-medium">{p.name}</span>
-          <span className="text-xs text-mut truncate flex-1">{p.path}</span>
-          <input
-            className="input w-40 h-7 text-xs"
-            placeholder="ami/… branch to merge"
-            value={mergeBranch[p.id] ?? ""}
-            onChange={(e) => setMergeBranch((m) => ({ ...m, [p.id]: e.target.value }))}
-          />
-          <button
-            className="btn text-xs"
-            disabled={!(mergeBranch[p.id] ?? "").trim()}
-            onClick={async () => {
-              try {
-                const res = await api.mergeBack(p.id, mergeBranch[p.id].trim());
-                if (res.ok) toast(res.message);
-                else toast.error(res.message);
-              } catch (e) {
-                toast.error(errMsg(e));
-              }
-            }}
-          >
-            Merge back
-          </button>
-          <button
-            className="btn text-xs"
-            onClick={async () => {
-              await api.removeProject(p.id);
-              toast(`Removed ${p.name}`);
-              void qc.invalidateQueries({ queryKey: ["projects"] });
-            }}
-          >
-            Remove
-          </button>
-        </div>
-      ))}
-      <div className="flex gap-2">
-        <input
-          className="input"
-          placeholder="/path/to/local/repo"
-          value={path}
-          onChange={(e) => setPath(e.target.value)}
-        />
-        <button
-          className="btn btn-primary shrink-0"
-          disabled={!path.trim()}
-          onClick={async () => {
-            try {
-              const res = await api.addProject(path.trim());
-              if (!res.ok) throw new Error(res.error ?? "failed");
-              toast(`Added ${res.project?.name ?? "repo"}`);
-            } catch (e) {
-              toast.error(`Failed: ${errMsg(e)}`);
-            }
-            setPath("");
-            void qc.invalidateQueries({ queryKey: ["projects"] });
-          }}
-        >
-          Add repo
-        </button>
       </div>
     </div>
   );

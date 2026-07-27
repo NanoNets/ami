@@ -287,13 +287,6 @@ export const api = {
     fetch("/api/projects").then(
       json<{ id: string; name: string; path: string; defaultBranch: string }[]>,
     ),
-  addProject: (path: string, name?: string) =>
-    fetch("/api/projects", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path, name }),
-    }).then(json<{ ok: boolean; error?: string; project?: { id: string; name: string } }>),
-  removeProject: (id: string) => fetch(`/api/projects/${id}`, { method: "DELETE" }).then(json),
   mergeBack: (projectId: string, branch: string) =>
     fetch(`/api/projects/${projectId}/merge-back`, {
       method: "POST",

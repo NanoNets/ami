@@ -117,17 +117,18 @@ export default function Onboarding() {
   const connectors = useQuery({
     queryKey: ["connectors"],
     queryFn: api.connectors,
-    // Poll until both core tools are in — the Google OAuth callback lands in
-    // another tab, so this page only learns about it by refetching.
+    // Poll until Slack is in. Google is optional and connects via an OAuth
+    // callback in another tab, so keep polling while it (or Slack) is pending.
     refetchInterval: (q) => {
       const done = (id: string) => q.state.data?.some((c) => c.connector === id && c.connected);
-      return done("gmail") && done("slack") ? false : 3000;
+      return done("slack") ? false : 3000;
     },
   });
   const isConnected = (id: string) => connectors.data?.some((c) => c.connector === id && c.connected) ?? false;
   const googleDone = isConnected("gmail");
   const slackDone = isConnected("slack");
-  const coreDone = googleDone && slackDone;
+  // Slack is the only mandatory tool; Google is offered under "connect more".
+  const coreDone = slackDone;
 
   // Re-fetch identity when a core tool connects: the server pre-fills
   // name/email/domain from whichever account arrives first.
@@ -287,11 +288,11 @@ export default function Onboarding() {
 
       {keyDone && (
         <div ref={toolsRef} className="scroll-mt-6">
-        <StepCard title="Slack + Gmail + Calendar" done={coreDone}>
+        <StepCard title="Slack" done={coreDone}>
           <p className="text-sm text-mut mb-4">
-            Ami starts learning your world from your Slack and Google accounts. Connect both to continue.
+            Ami starts learning your world from your Slack. Connect it to continue — you can add Gmail, Calendar and more in the next step.
           </p>
-          <ConnectorCards only={["slack", "gmail"]} autoOpenSlackChannels />
+          <ConnectorCards only={["slack"]} autoOpenSlackChannels />
         </StepCard>
         </div>
       )}
@@ -356,9 +357,9 @@ export default function Onboarding() {
             (Optional) Connect more tools
           </h2>
           <p className="text-sm text-mut mb-4">
-            It is highly recommended to connect tools you frequently use. You can also add them later in Settings.
+            Connecting Gmail and Calendar is highly recommended — along with any other tools you frequently use. You can also add them later in Settings.
           </p>
-          <ConnectorCards exclude={["gmail", "slack"]} compact />
+          <ConnectorCards exclude={["slack"]} compact />
         </div>
       )}
 

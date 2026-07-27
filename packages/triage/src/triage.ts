@@ -148,6 +148,9 @@ export async function triageBatch(db: Db, limit = 10, publish?: Publish): Promis
       title: item.title,
       summary: item.summary,
       dueAt: signalDueDate(signal) ?? normalizeDueDate(item.dueBy),
+      // Stamp the card with the source event's time (email received, ticket
+      // created, message sent), not the moment triage ran.
+      createdAt: signal.receivedAt,
       entityIds: [],
     });
     createdTodoIds.push(todoId);

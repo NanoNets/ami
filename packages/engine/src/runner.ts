@@ -29,7 +29,7 @@ import {
   runAgentSession,
   writeSourceDoc,
 } from "@ami/memory";
-import type { AmiEvent } from "@ami/shared";
+import { worktreeBranchForTodo, type AmiEvent } from "@ami/shared";
 import { amiMcpServer } from "./mcp-server.js";
 import { browserMcpServer } from "./browser-mcp.js";
 import { AMI_APPEND, buildTaskPrompt, taskGuidance, taskTools } from "./prompts.js";
@@ -110,7 +110,7 @@ export function startRun(db: Db, publish: Publish, args: StartRunArgs): string {
       ? {
           projectPath: project.path,
           path: path.join(worktreeRoot(), todo.id),
-          branch: `ami/${todo.id.replace(/[^a-zA-Z0-9_-]/g, "").slice(-24)}`,
+          branch: worktreeBranchForTodo(todo.id),
         }
       : null;
 
@@ -319,7 +319,7 @@ async function executeRun(
       if (changed.length > 0) {
         const id = insertArtifact(db, {
           runId,
-          type: "other",
+          type: "branch",
           title: `Branch ${ctx.worktree.branch}: ${changed.length} file(s) changed`,
           contentMd: [
             `Worktree: \`${ctx.worktree.path}\``,
@@ -327,7 +327,7 @@ async function executeRun(
             ``,
             ...changed.map((f) => `- \`${f.state}\` ${f.path}`),
             ``,
-            `Merge back from Settings → Code projects, or push/PR from the worktree.`,
+            `Merge back into your checkout from this task, or push/PR from the worktree.`,
           ].join("\n"),
         });
         publish({ type: "artifact.created", artifactId: id, runId, todoId: ctx.todoId });
