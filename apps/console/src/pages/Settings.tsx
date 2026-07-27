@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { toast, errMsg } from "../lib/toast";
@@ -6,18 +6,9 @@ import { useIngestProgress } from "../lib/ingest";
 import { ConnectorIcon } from "../components/ConnectorIcon";
 import { CheckIcon, ExternalIcon, LockIcon, Spinner, XIcon } from "../components/icons";
 import { Disclosure } from "../components/ui";
-
-const MODEL_OPTIONS = [
-  { id: "claude-opus-4-8", label: "Opus — most capable" },
-  { id: "claude-sonnet-4-6", label: "Sonnet — balanced" },
-  { id: "claude-haiku-4-5", label: "Haiku — fastest, cheapest" },
-];
+import { LlmConfig } from "../components/LlmConfig";
 
 export default function Settings() {
-  const setup = useQuery({ queryKey: ["setup"], queryFn: api.setupStatus });
-  const qc = useQueryClient();
-  const [apiKey, setApiKey] = useState("");
-
   return (
     <div className="max-w-2xl space-y-8">
       <section>
@@ -32,64 +23,8 @@ export default function Settings() {
 
       <section>
         <h2 className="text-sm uppercase tracking-wider text-mut mb-3">Model provider</h2>
-        <div className="card p-4 space-y-3">
-          <div className="flex gap-2">
-            <input
-              className="input"
-              type="password"
-              placeholder={setup.data?.hasApiKey ? "API key set — paste to rotate" : "sk-ant-… (or your provider's key)"}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-            />
-            <button
-              className="btn btn-primary shrink-0"
-              disabled={!apiKey.trim()}
-              onClick={async () => {
-                try {
-                  const res = await api.saveApiKey(apiKey.trim());
-                  if (!res.ok) throw new Error(res.error ?? "validation failed");
-                  toast("API key saved");
-                } catch (e) {
-                  toast.error(`Failed: ${errMsg(e)}`);
-                }
-                setApiKey("");
-                void qc.invalidateQueries({ queryKey: ["setup"] });
-              }}
-            >
-              Save key
-            </button>
-          </div>
-          <BaseUrlRow
-            key={`base-${setup.data?.baseUrl ?? ""}`}
-            current={setup.data?.baseUrl ?? ""}
-            onSaved={() => void qc.invalidateQueries({ queryKey: ["setup"] })}
-          />
-          <ModelField
-            key={`model-${setup.data?.model ?? ""}`}
-            label="Model for triage & task runs:"
-            value={setup.data?.model ?? "claude-opus-4-8"}
-            onSave={async (m) => {
-              await api.saveModel(m);
-              toast("Model updated");
-              void qc.invalidateQueries({ queryKey: ["setup"] });
-            }}
-          />
-          <ModelField
-            key={`kg-${setup.data?.kgModel ?? ""}`}
-            label="Model for memory agents:"
-            value={setup.data?.kgModel ?? "claude-sonnet-4-6"}
-            hint="runs on every substantive signal"
-            onSave={async (m) => {
-              await api.saveKgModel(m);
-              toast("Model updated");
-              void qc.invalidateQueries({ queryKey: ["setup"] });
-            }}
-          />
-          <p className="text-xs text-mut">
-            Leave the endpoint blank to use Anthropic. Any Anthropic-compatible endpoint works: hosted
-            open models (Kimi, GLM, DeepSeek) or a local LiteLLM proxy in front of Ollama / vLLM — set
-            the endpoint, the model names your provider serves, and its key.
-          </p>
+        <div className="card p-4">
+          <LlmConfig variant="settings" />
         </div>
       </section>
 
@@ -105,81 +40,6 @@ export default function Settings() {
         <h2 className="text-sm uppercase tracking-wider text-mut mb-3">LLM usage</h2>
         <UsageCard />
       </section>
-    </div>
-  );
-}
-
-/** Anthropic-compatible endpoint override; empty = api.anthropic.com. */
-function BaseUrlRow({ current, onSaved }: { current: string; onSaved: () => void }) {
-  const [value, setValue] = useState(current);
-  const dirty = value.trim().replace(/\/+$/, "") !== current;
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-mut shrink-0">API endpoint:</span>
-      <input
-        className="input"
-        placeholder="https://api.anthropic.com (default)"
-        defaultValue={current}
-        onChange={(e) => setValue(e.target.value)}
-      />
-      <button
-        className="btn shrink-0"
-        disabled={!dirty}
-        onClick={async () => {
-          try {
-            const res = await api.saveBaseUrl(value.trim());
-            if (!res.ok) throw new Error(res.error ?? "save failed");
-            toast(value.trim() ? "Endpoint saved — re-save your key to validate it" : "Back to Anthropic");
-          } catch (e) {
-            toast.error(`Failed: ${errMsg(e)}`);
-          }
-          onSaved();
-        }}
-      >
-        Save
-      </button>
-    </div>
-  );
-}
-
-/** Free-text model name (any name the configured endpoint serves), with the
- * Claude models offered as suggestions. Saves on Enter or blur. */
-function ModelField({
-  label,
-  value,
-  hint,
-  onSave,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  onSave: (model: string) => Promise<void>;
-}) {
-  const [draft, setDraft] = useState(value);
-  const listId = useId();
-  const commit = () => {
-    const m = draft.trim();
-    if (m && m !== value) void onSave(m);
-  };
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-mut shrink-0">{label}</span>
-      <input
-        className="input w-64"
-        list={listId}
-        defaultValue={value}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-      />
-      <datalist id={listId}>
-        {MODEL_OPTIONS.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.label}
-          </option>
-        ))}
-      </datalist>
-      {hint && <span className="text-xs text-mut">{hint}</span>}
     </div>
   );
 }

@@ -20,10 +20,30 @@ async function json<T>(res: Response): Promise<T> {
 export const api = {
   setupStatus: () =>
     fetch("/api/setup/status").then(
-      json<{ hasApiKey: boolean; onboarded: boolean; model: string; kgModel: string; baseUrl: string }>,
+      json<{
+        hasApiKey: boolean;
+        llmReady: boolean;
+        mode: "anthropic" | "hosted" | "local";
+        onboarded: boolean;
+        model: string;
+        kgModel: string;
+        baseUrl: string;
+      }>,
     ),
   completeSetup: () =>
     fetch("/api/setup/complete", { method: "POST" }).then(json<{ ok: boolean }>),
+  saveLlmConfig: (body: {
+    mode: "anthropic" | "hosted" | "local";
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+    kgModel: string;
+  }) =>
+    fetch("/api/setup/llm-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }).then(json<{ ok: boolean; error?: string }>),
   saveApiKey: (apiKey: string) =>
     fetch("/api/setup/apikey", {
       method: "POST",

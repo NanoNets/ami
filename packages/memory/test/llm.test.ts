@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { openTestDb, setSetting, type Db } from "@ami/db";
 import { z } from "zod";
-import { llmBaseUrl, llmEnv, parseWithSchema } from "../src/llm.js";
+import { anthropicClient, llmBaseUrl, llmEnv, parseWithSchema } from "../src/llm.js";
 
 let db: Db;
 
@@ -35,6 +35,19 @@ describe("provider config", () => {
       ANTHROPIC_SMALL_FAST_MODEL: "qwen3-8b",
       ANTHROPIC_DEFAULT_HAIKU_MODEL: "qwen3-8b",
     });
+  });
+
+  it("supports a keyless local endpoint (base URL set, no key)", () => {
+    // No key and no endpoint: no client, no injected key.
+    expect(anthropicClient(db)).toBeNull();
+    expect(llmEnv(db)).toEqual({});
+
+    // Base URL but no key: a placeholder token stands in so the client and
+    // agent runs work against a proxy that ignores auth.
+    setSetting(db, "llm_base_url", "http://localhost:4000");
+    expect(anthropicClient(db)).not.toBeNull();
+    expect(llmEnv(db).ANTHROPIC_API_KEY).toBeTruthy();
+    expect(llmEnv(db).ANTHROPIC_BASE_URL).toBe("http://localhost:4000");
   });
 });
 

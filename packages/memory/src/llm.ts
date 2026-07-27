@@ -30,11 +30,19 @@ export function llmApiKey(db: Db): string | null {
   return getSetting(db, "anthropic_api_key") ?? process.env.ANTHROPIC_API_KEY ?? null;
 }
 
-/** The client factory for every direct (non-agent) LLM call. */
+/** Placeholder token used when a base URL is configured but no key is set —
+ * local proxies (LiteLLM/Ollama/vLLM) that accept any token. The SDK requires
+ * a non-empty apiKey to initialize, so we hand it one the endpoint ignores. */
+const NO_AUTH_KEY = "sk-noauth";
+
+/** The client factory for every direct (non-agent) LLM call. Returns null only
+ * when there's neither a key nor a base URL; a keyless local endpoint (base URL
+ * set, no key) still gets a client using a placeholder token. */
 export function anthropicClient(db: Db): Anthropic | null {
-  const apiKey = llmApiKey(db);
+  const base = llmBaseUrl(db);
+  const apiKey = llmApiKey(db) ?? (base ? NO_AUTH_KEY : null);
   if (!apiKey) return null;
-  return new Anthropic({ apiKey, baseURL: llmBaseUrl(db) ?? undefined });
+  return new Anthropic({ apiKey, baseURL: base ?? undefined });
 }
 
 /** Env for Agent SDK query() runs. Claude Code honors ANTHROPIC_BASE_URL, so
@@ -42,8 +50,10 @@ export function anthropicClient(db: Db): Anthropic | null {
  * small-model calls (haiku by default) are pointed at the utility model —
  * a name a non-Anthropic endpoint actually serves. */
 export function llmEnv(db: Db): Record<string, string> {
-  const key = llmApiKey(db);
   const base = llmBaseUrl(db);
+  // Keyless local endpoint: hand Claude Code the placeholder token too, so
+  // agent runs work against a proxy that ignores auth.
+  const key = llmApiKey(db) ?? (base ? NO_AUTH_KEY : null);
   return {
     ...(key ? { ANTHROPIC_API_KEY: key } : {}),
     ...(base

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { ConnectorCards } from "./Settings";
+import { LlmConfig } from "../components/LlmConfig";
 import { CheckIcon, EyeIcon, LockIcon, SearchIcon, ZapIcon } from "../components/icons";
 
 /** First run: one hero promise, a three-step rail, and exactly one thing to do
@@ -170,11 +171,7 @@ export default function Onboarding() {
     }
   }
 
-  const [apiKey, setApiKey] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  const keyDone = setup.data?.hasApiKey ?? false;
+  const keyDone = setup.data?.llmReady ?? false;
   const ready = keyDone && coreDone && identityDone;
 
   // When a step completes it collapses to its ✓ line — scroll the newly
@@ -200,20 +197,6 @@ export default function Onboarding() {
       target?.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
     );
   }, [setup.data, connectors.data, identity.data, keyDone, coreDone, identityDone]);
-
-  async function saveKey() {
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await api.saveApiKey(apiKey.trim());
-      if (!res.ok) throw new Error(res.error ?? "validation failed");
-      await qc.invalidateQueries({ queryKey: ["setup"] });
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -260,30 +243,8 @@ export default function Onboarding() {
         ]}
       />
 
-      <StepCard title="Claude API key" done={keyDone}>
-        <p className="text-sm text-mut mb-3">
-          Ami runs on your Claude key. Get one at{" "}
-          <a href="https://platform.claude.com/settings/keys" target="_blank" rel="noreferrer" className="text-acc">
-            platform.claude.com
-          </a>
-          . It never leaves this machine.
-        </p>
-        <div className="flex gap-2">
-          <input
-            className="input"
-            type="password"
-            placeholder={keyDone ? "API key set — paste to rotate" : "sk-ant-…"}
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && apiKey.trim() && !saving) void saveKey();
-            }}
-          />
-          <button className="btn btn-primary shrink-0" disabled={!apiKey.trim() || saving} onClick={saveKey}>
-            {saving ? "Validating…" : "Save"}
-          </button>
-        </div>
-        {error && <p className="text-sm text-bad mt-2">{error}</p>}
+      <StepCard title="Model" done={keyDone} doneSummary={setup.data?.baseUrl || undefined}>
+        <LlmConfig variant="onboarding" />
       </StepCard>
 
       {keyDone && (
