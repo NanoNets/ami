@@ -23,7 +23,9 @@ git clone https://github.com/NanoNets/ami.git && cd ami
 
 http://localhost:4141 opens with the onboarding screen. 
 - Configure your model (Claude API Key / BYO hosted model / Local model).
-- Connect tools (Slack is mandatory, connecting others is optional, but highly recommended to get any meaningful output with Ami). You connect using personal tokens. Both are stored only on this machine.
+- Connect tools (Slack is mandatory, connecting others is optional, but highly recommended to get any meaningful output with Ami). You connect using personal tokens.
+
+Both are stored only on this machine.
 
 Optional extras, install if you want the matching feature:
 
