@@ -2,7 +2,7 @@
 
 https://github.com/user-attachments/assets/c32129ab-b041-44ac-bfe4-d3b6386c7dcd
 
-Ami is your AI clone + copilot chat.
+Ami is your AI shadow worker + copilot chat.
 
 It connects to apps, data, repositories, tools with your personal tokens, maintains a live to-do list, learns how you do tasks, executes the "busy work" tasks on your behalf. It constructs a context graph memory of you, with entities, relationships, feedbacks, decisions, writing styles maintained in memory so it can get more autonomous the more you use it.
 
