@@ -132,6 +132,41 @@ export function Switch({
   );
 }
 
+/** A three-or-so-way exclusive toggle: buttons in a bordered rail, the active
+ * one lit with the accent. For picking a mode where the panel below swaps. */
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { value: T; label: string }[];
+  value: T;
+  onChange: (v: T) => void;
+  label?: string;
+}) {
+  return (
+    <div role="tablist" aria-label={label} className="inline-flex border border-edge2 rounded-soft p-0.5 bg-panel2">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(o.value)}
+            className={`px-3 py-1.5 text-sm rounded-soft transition-colors cursor-pointer ${
+              active ? "bg-acc text-white" : "text-mut hover:text-hi"
+            }`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /** Collapsed-by-default explanatory prose. The UI states the one-line purpose;
  * the paragraph lives behind this. */
 export function Disclosure({ summary = "How it works", children }: { summary?: string; children: ReactNode }) {
