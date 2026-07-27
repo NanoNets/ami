@@ -224,7 +224,7 @@ export default function Onboarding() {
         <HeroPoint
           icon={<ZapIcon size={15} />}
           title="Acts on your behalf"
-          text="Performs actions, posts replies, completes tasks end-to-end, acting as you either autonomously or in iterations with your feedback."
+          text="Performs actions, posts replies, completes tasks, runs copilot chats, acting as you either autonomously or in iterations with your feedback."
           delay={300}
         />
         <HeroPoint
@@ -251,7 +251,7 @@ export default function Onboarding() {
         <div ref={toolsRef} className="scroll-mt-6">
         <StepCard title="Slack" done={coreDone}>
           <p className="text-sm text-mut mb-4">
-            Ami starts learning your world from your Slack. Connect it to continue — you can add Gmail, Calendar and more in the next step.
+            Ami starts learning your world from your Slack. This is mandatory. You can optionally add other apps in the next step.
           </p>
           <ConnectorCards only={["slack"]} autoOpenSlackChannels />
         </StepCard>
@@ -266,7 +266,7 @@ export default function Onboarding() {
           doneSummary={identity.data ? `${identity.data.name} · ${identity.data.email}` : undefined}
         >
           <p className="text-sm text-mut mb-3">
-            Ami reads everything from your point of view — this is who "you" are. Fix anything that looks off.
+            Ami reads everything from your point of view.
           </p>
           <div className="grid sm:grid-cols-3 gap-2">
             <label className="block">
@@ -318,7 +318,7 @@ export default function Onboarding() {
             (Optional) Connect more tools
           </h2>
           <p className="text-sm text-mut mb-4">
-            Connecting Gmail and Calendar is highly recommended — along with any other tools you frequently use. You can also add them later in Settings.
+            Connecting at least 3 tools you frequently use is highly recommended. You can also add them later in Settings.
           </p>
           <ConnectorCards exclude={["slack"]} compact />
         </div>
