@@ -107,6 +107,7 @@ export async function processMeetingActionItems(
       title: item.title,
       summary: `${item.summary} (from meeting "${meeting.title}" — knowledge/${meeting.notePath})`,
       signalId: sigId,
+      createdAt: meeting.when,
       entityIds: [],
     });
     insertTrace(db, {
@@ -125,6 +126,7 @@ export async function processMeetingActionItems(
       title: fyi.title,
       summary: `${fyi.summary} (from meeting "${meeting.title}")`,
       signalId: sigId,
+      createdAt: meeting.when,
       entityIds: [],
     });
     publish({ type: "todo.created", todoId });

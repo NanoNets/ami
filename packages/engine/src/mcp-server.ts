@@ -12,6 +12,7 @@ import { appendToInbox, enforceStyleOnDraft, readNote, searchKnowledge } from "@
 import { ArtifactTypes, type AmiEvent, type AuthBlob } from "@ami/shared";
 import { allConnectors } from "@ami/connectors";
 import { askUser } from "./questions.js";
+import { fetchPageMarkdown } from "./fetch-page.js";
 
 type Publish = (e: AmiEvent) => void;
 
@@ -95,6 +96,20 @@ export function amiMcpServer(args: {
       async ({ note }) => {
         const content = readNote(note);
         return ok(content ?? { error: "note not found" });
+      },
+      { annotations: { readOnlyHint: true } },
+    ),
+    tool(
+      "fetch_page",
+      "Fetch a web page and return its main content as VERBATIM markdown (raw HTML → readability extraction → markdown, no LLM in the loop). Use this instead of WebFetch whenever you need the actual, complete text — a full article/post, an exact spec or doc to mirror, anything the user wants word-for-word. WebFetch summarizes and silently drops detail; fetch_page does not. Public URLs only; for auth-walled pages or JS-rendered apps use the browser tools. Not for GitHub file contents — use github_read_file.",
+      { url: z.string().describe("Absolute http(s) URL of the page to capture") },
+      async ({ url }) => {
+        try {
+          const page = await fetchPageMarkdown(url);
+          return ok(page);
+        } catch (e: any) {
+          return ok({ error: String(e?.message ?? e), url });
+        }
       },
       { annotations: { readOnlyHint: true } },
     ),

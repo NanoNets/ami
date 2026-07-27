@@ -60,6 +60,7 @@ export const ArtifactTypes = [
   "meeting_link",
   "post",
   "file",
+  "branch",
   "other",
 ] as const;
 export type ArtifactType = (typeof ArtifactTypes)[number];
@@ -299,6 +300,12 @@ export const nowIso = () => new Date().toISOString();
 export function newId(prefix: string): string {
   const rand = Math.random().toString(36).slice(2, 10);
   return `${prefix}_${Date.now().toString(36)}${rand}`;
+}
+
+/** The deterministic git branch a coding run works on for a given todo. Single
+ * source of truth so the runner and the console agree on the branch name. */
+export function worktreeBranchForTodo(todoId: string): string {
+  return `ami/${todoId.replace(/[^a-zA-Z0-9_-]/g, "").slice(-24)}`;
 }
 
 /** Ami's house writing style — Orwell's rules plus plain-spoken developer

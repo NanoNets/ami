@@ -121,7 +121,10 @@ export function insertSignal(
       url: sig.url,
       threadRef: sig.threadRef,
       rawJson: JSON.stringify(sig.raw ?? null),
-      receivedAt: nowIso(),
+      // The event's own time (email received, message sent, ticket created) —
+      // used downstream as occurred_at, prefilter recency, and the todo's
+      // createdAt. Fall back to now only when the connector omits/malforms it.
+      receivedAt: normalizeInstant(sig.occurredAt) ?? nowIso(),
     })
     .onConflictDoNothing()
     .run();
@@ -153,6 +156,13 @@ export function getSignal(db: Db, id: string) {
 
 // ---------- todos ----------
 
+/** Normalizes any date-ish string to a full ISO 8601 instant, or null. */
+export function normalizeInstant(v: string | null | undefined): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
 /** Normalizes any date-ish string to date-only YYYY-MM-DD, or null. */
 export function normalizeDueDate(v: string | null | undefined): string | null {
   if (!v) return null;
@@ -172,6 +182,10 @@ export function insertTodo(
     entityIds?: string[];
     /** Date-only YYYY-MM-DD. Tasks without one default to +7 days; FYIs to none. */
     dueAt?: string | null;
+    /** When the underlying event happened (email received, message/ticket
+     * created) — becomes the todo's createdAt so it reflects the source's time,
+     * not when triage got around to it. Defaults to now. */
+    createdAt?: string | null;
   },
 ): string {
   const id = newId("todo");
@@ -189,7 +203,9 @@ export function insertTodo(
       summary: t.summary,
       dueAt,
       entityIdsJson: JSON.stringify(t.entityIds ?? []),
-      createdAt: now,
+      createdAt: normalizeInstant(t.createdAt) ?? now,
+      // updatedAt stays "now" so freshly-triaged cards from old signals still
+      // surface at the top of the list (listTodos orders by updatedAt).
       updatedAt: now,
     })
     .run();

@@ -85,6 +85,22 @@ export function DueBy({ todo }: { todo: TodoDto }) {
     onError: (e) => toast.error(errMsg(e)),
   });
 
+  // A finished task no longer has a deadline to count down — show when it was
+  // done instead of a due date or the "set due date" prompt.
+  if (todo.status === "resolved") {
+    const done = new Date(todo.updatedAt);
+    const pretty = done.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      ...(done.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+    });
+    return (
+      <span className="text-xs text-ok" title={`Resolved ${done.toLocaleString()}`}>
+        done {pretty}
+      </span>
+    );
+  }
+
   if (editing)
     return (
       <input

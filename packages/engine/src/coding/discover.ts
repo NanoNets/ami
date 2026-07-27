@@ -59,7 +59,7 @@ export async function discoverCodeProjects(db: Db): Promise<number> {
       console.log(`[projects] pruned ${p.name} (folder gone: ${p.path})`);
     }
   }
-  const repos = findRepos(os.homedir(), 3, 60);
+  const repos = findRepos(os.homedir(), 5, 60);
   let added = 0;
   for (const p of repos) {
     if (db.select().from(codeProjects).where(eq(codeProjects.path, p)).get()) continue;

@@ -99,6 +99,29 @@ Ami currently has a limited number of connectors. But it is skilled to build any
 
 Ami will build the connector (using your claude code and your API key) and make it available to task runs and copilot chats.
 
+## Models — Anthropic, open source, or local
+
+Ami speaks the Anthropic Messages API as a protocol. Every LLM call follows a single endpoint setting, so switching provider is a single change in Settings → Models:
+
+- API key — your provider's key (Anthropic's by default).
+- Base URL — leave blank for Anthropic, or point it at any Anthropic-compatible endpoint.
+- Model for triage & task runs — the main model (default `claude-opus-4-8`). Free-text: any model name your endpoint serves.
+- Model for memory agents — the cheap/utility model (default `claude-sonnet-4-6`). It runs on every substantive signal, so on a local setup this is the knob to point at a small model.
+
+The Claude Agent SDK honors the base URL, and its internal small-model calls are remapped to your utility model. Structured outputs automatically fall back to schema-prompted JSON on non-Anthropic endpoints, so compat providers work without tweaks.
+
+**Hosted open models** — Kimi, GLM, DeepSeek, and MiniMax all publish Anthropic-compatible base URLs (e.g. `https://api.moonshot.ai/anthropic` for Kimi). Set the base URL, their key, and their model names.
+
+**Fully local** — put a LiteLLM proxy in front of Ollama / vLLM / llama.cpp; it exposes the Anthropic protocol:
+
+```sh
+ollama pull qwen3:32b
+pip install 'litellm[proxy]'
+litellm --model ollama/qwen3:32b     # Anthropic-compatible endpoint on :4000
+```
+
+Then in **Settings → Models**: base URL `http://localhost:4000`, model `ollama/qwen3:32b` for both knobs (or a smaller model for memory agents), and any placeholder key if the proxy has no auth. With connectors polling local-first tools, nothing leaves your machine at all.
+
 ## Data & privacy
 
 Everything Ami knows lives under `~/.ami/`. 
@@ -107,7 +130,7 @@ Everything Ami knows lives under `~/.ami/`.
 - `worktrees/` (isolated coding checkouts), 
 - `bg-tasks/` and `events/` (background agent state). 
 
-Delete the directory and Ami forgets everything. The only outbound calls are to the Anthropic API and to the tools you connected with your tokens.
+Delete the directory and Ami forgets everything. The only outbound calls are to your configured model endpoint (Anthropic by default) and to the tools you connected with your tokens.
 
 ## WIP
 
