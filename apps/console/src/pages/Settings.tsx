@@ -463,7 +463,7 @@ export function ConnectorCards({
                     <li className="flex gap-2">
                       <span className="chip shrink-0">1</span>
                       <span>
-                        Open the button below, choose <b>From a manifest</b>, pick your workspace, then paste the
+                        Open the button below, choose <b>From a manifest</b>, pick your workspace, select YAML editor, then paste the
                         manifest below and click <b>Next</b> → <b>Create</b>.
                       </span>
                     </li>
@@ -657,6 +657,7 @@ function ConnectorBuilderCard({ compact }: { compact?: boolean }) {
 
 /** Tag channels as "read every message" — everything else stays mentions-only. */
 function SlackChannelsPanel({ onSaved }: { onSaved?: () => void }) {
+  const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ["slackChannels"],
     queryFn: api.slackChannels,
@@ -675,6 +676,9 @@ function SlackChannelsPanel({ onSaved }: { onSaved?: () => void }) {
       ),
     onSuccess: () => {
       toast("Channel modes saved");
+      // channelsConfigured flips on the connectors DTO — onboarding's Slack
+      // step collapses off the back of this.
+      void qc.invalidateQueries({ queryKey: ["connectors"] });
       onSaved?.();
     },
     onError: (e) => toast.error(errMsg(e)),
@@ -691,8 +695,8 @@ function SlackChannelsPanel({ onSaved }: { onSaved?: () => void }) {
   return (
     <div className="mt-3 border-t border-edge pt-3">
       <p className="text-xs text-mut mb-2">
-        Ami always sees your mentions, but tick channels where it should read <em>every</em> message
-        (alerts, exec, your team). Busy social channels are better left mentions-only to save costs.
+        Ami always sees your mentions, but tick channels where it should read every message
+        (alerts, exec, team). <b>Tick channels conservatively to save costs.</b>
       </p>
       <label className="flex items-center gap-2 text-sm cursor-pointer mb-2 pb-2 border-b border-edge">
         <input type="checkbox" checked={readDms} onChange={(e) => setDms(e.target.checked)} />

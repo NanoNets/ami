@@ -219,7 +219,7 @@ export const slackConnector: AmiConnector = {
       { key: "token", label: "User OAuth token (xoxp-…)", placeholder: "xoxp-…", secret: true },
     ],
     setupHelp:
-      "Open Slack's app creator, choose \"From a manifest\", pick your workspace, and paste the manifest below (it includes every permission Ami needs). Click Create → Install App → Install/Reinstall to Workspace → Allow. Slack then shows a \"User OAuth Token\" starting with xoxp- on the same page: copy it and paste it here. One-time setup; the token is stored only on this machine.",
+      "Open Slack's app creator, choose \"From a manifest\", pick your workspace, select YAML editor, and paste the manifest below (it includes every permission Ami needs). Click Create → Install App → Install/Reinstall to Workspace → Allow. Slack then shows a \"User OAuth Token\" starting with xoxp- on the same page: copy it and paste it here. One-time setup; the token is stored only on this machine.",
     setupActions: [{ label: "Open Slack app creator", url: SLACK_CREATE_APP_URL }],
     setupSnippet: { label: "App manifest", content: SLACK_APP_MANIFEST_YAML },
   },
