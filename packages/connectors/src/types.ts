@@ -65,6 +65,10 @@ export interface AmiConnector {
      * client-side from the auth fields the user has typed (Ghost's admin URL
      * depends on the blog domain); the button stays disabled until filled. */
     setupActions?: { label: string; url: string }[];
+    /** Optional copy-to-clipboard block shown in the connect panel — for setup
+     * flows where the user must paste config into the provider's UI (e.g. Slack's
+     * app manifest, which its deep-link create flow refuses to prefill reliably). */
+    setupSnippet?: { label: string; content: string };
   };
   validateAuth(auth: AuthBlob): Promise<{ ok: boolean; accountLabel?: string; error?: string }>;
   streams(): StreamDef[];

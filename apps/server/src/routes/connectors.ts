@@ -62,7 +62,8 @@ export function connectorRoutes(db: Db, port: number) {
         custom: isCustomConnector(conn.id),
         authFields: conn.meta.authFields,
         setupActions: conn.meta.setupActions ?? [],
-      } as ConnectorStatusDto & { authFields: unknown; setupActions: unknown };
+        setupSnippet: conn.meta.setupSnippet ?? null,
+      } as ConnectorStatusDto & { authFields: unknown; setupActions: unknown; setupSnippet: unknown };
     });
     return c.json(dtos);
   });

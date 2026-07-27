@@ -44,6 +44,44 @@ export default function Settings() {
   );
 }
 
+/** A copy-to-clipboard config block (e.g. Slack's app manifest) shown in the
+ * connect panel for setups that need pasting into the provider's own UI. */
+function SetupSnippet({ snippet }: { snippet: { label: string; content: string } }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(snippet.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast("Couldn't copy — select the text and copy manually");
+    }
+  };
+  return (
+    <div className="rounded-soft border border-edge bg-panel2 overflow-hidden">
+      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-edge">
+        <span className="text-xs text-mut">{snippet.label}</span>
+        <button
+          className="btn text-xs inline-flex items-center gap-1.5"
+          onClick={copy}
+          type="button"
+        >
+          {copied ? (
+            <>
+              <CheckIcon size={11} /> Copied
+            </>
+          ) : (
+            "Copy"
+          )}
+        </button>
+      </div>
+      <pre className="px-2.5 py-2 text-xs text-mut overflow-x-auto max-h-48 whitespace-pre">
+        {snippet.content}
+      </pre>
+    </div>
+  );
+}
+
 /** "reading your history…" upgraded to the live ingest line when the SSE
  * stream has one for this connector ("Gmail: scanned 214 emails"). */
 function BootstrapBadge({ label }: { label: string }) {
@@ -425,14 +463,14 @@ export function ConnectorCards({
                     <li className="flex gap-2">
                       <span className="chip shrink-0">1</span>
                       <span>
-                        Open the button below. Slack loads Ami's app fully preconfigured. Pick workspace and
-                        click <b>Create</b>.
+                        Open the button below, choose <b>From a manifest</b>, pick your workspace, then paste the
+                        manifest below and click <b>Next</b> → <b>Create</b>.
                       </span>
                     </li>
                     <li className="flex gap-2">
                       <span className="chip shrink-0">2</span>
                       <span>
-                        On the app page, click <b>Install App</b> → <b>Install to Workspace</b> → <b>Allow</b>.
+                        On the app page, click <b>Install App</b> → <b>Install/Reinstall to Workspace</b> → <b>Allow</b>.
                       </span>
                     </li>
                     <li className="flex gap-2">
@@ -477,6 +515,7 @@ export function ConnectorCards({
                     })}
                   </div>
                 )}
+                {c.setupSnippet && <SetupSnippet snippet={c.setupSnippet} />}
                 {c.authFields.map((f) => (
                   <input
                     key={f.key}
