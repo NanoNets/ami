@@ -128,8 +128,13 @@ export default function Onboarding() {
   const isConnected = (id: string) => connectors.data?.some((c) => c.connector === id && c.connected) ?? false;
   const googleDone = isConnected("gmail");
   const slackDone = isConnected("slack");
+  // Connecting Slack isn't the end of the step: the card stays open showing
+  // the channel picker until "Save channel modes" is clicked (persisted
+  // server-side, so returning users who already saved skip straight past).
+  const slackChannelsSaved =
+    connectors.data?.some((c) => c.connector === "slack" && c.channelsConfigured) ?? false;
   // Slack is the only mandatory tool; Google is offered under "connect more".
-  const coreDone = slackDone;
+  const coreDone = slackDone && slackChannelsSaved;
 
   // Re-fetch identity when a core tool connects: the server pre-fills
   // name/email/domain from whichever account arrives first.

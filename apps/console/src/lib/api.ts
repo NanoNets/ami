@@ -78,6 +78,8 @@ export const api = {
           setupActions: { label: string; url: string }[];
           /** Optional copy-to-clipboard block (e.g. Slack's app manifest). */
           setupSnippet?: { label: string; content: string } | null;
+          /** Slack only: whether channel modes were ever saved (null elsewhere). */
+          channelsConfigured?: boolean | null;
         })[]
       >,
     ),

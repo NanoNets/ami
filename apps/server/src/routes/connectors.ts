@@ -63,7 +63,17 @@ export function connectorRoutes(db: Db, port: number) {
         authFields: conn.meta.authFields,
         setupActions: conn.meta.setupActions ?? [],
         setupSnippet: conn.meta.setupSnippet ?? null,
-      } as ConnectorStatusDto & { authFields: unknown; setupActions: unknown; setupSnippet: unknown };
+        // Slack only: whether channel modes were ever saved (the setting is
+        // written on first save). Onboarding keeps the Slack step open until
+        // the user has been through the channel picker, not just connected.
+        channelsConfigured:
+          conn.id === "slack" ? getSetting(db, "slack_read_all_channels") !== null : null,
+      } as ConnectorStatusDto & {
+        authFields: unknown;
+        setupActions: unknown;
+        setupSnippet: unknown;
+        channelsConfigured: unknown;
+      };
     });
     return c.json(dtos);
   });
