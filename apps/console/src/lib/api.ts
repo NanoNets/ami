@@ -76,6 +76,8 @@ export const api = {
           authFields: { key: string; label: string; placeholder?: string; secret?: boolean; optional?: boolean }[];
           /** One-click setup openers; {field} placeholders resolve from typed auth fields. */
           setupActions: { label: string; url: string }[];
+          /** Optional copy-to-clipboard block (e.g. Slack's app manifest). */
+          setupSnippet?: { label: string; content: string } | null;
         })[]
       >,
     ),

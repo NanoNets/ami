@@ -108,15 +108,15 @@ export function LlmConfig({ variant = "settings" }: { variant?: "onboarding" | "
       )}
       {mode === "hosted" && (
         <p className="text-sm text-mut">
-          Point Ami at any Anthropic-compatible endpoint — hosted open models (Kimi, GLM, DeepSeek) or a
+          Point Ami at any Anthropic-compatible endpoint. Hosted open models (Kimi, GLM, DeepSeek) or a
           LiteLLM proxy. Enter the endpoint, the model names it serves, and its key.
         </p>
       )}
       {mode === "local" && (
         <p className="text-sm text-mut">
-          Run a local Anthropic-compatible endpoint — a LiteLLM proxy in front of Ollama / vLLM / llama.cpp.
+          Run a local Anthropic-compatible endpoint. A LiteLLM proxy in front of Ollama / vLLM / llama.cpp.
           (Native Ollama and LM Studio speak the OpenAI API, so they need a translating proxy.) The key is
-          optional — most local proxies accept any token.
+          optional. Most local proxies accept any token.
         </p>
       )}
 
@@ -141,7 +141,6 @@ export function LlmConfig({ variant = "settings" }: { variant?: "onboarding" | "
         />
         <ModelField
           label="Model for memory agents"
-          hint="runs on every substantive signal"
           value={kgModel}
           onChange={setKgModel}
           select={mode === "anthropic"}

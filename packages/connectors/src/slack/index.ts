@@ -169,19 +169,46 @@ const SLACK_USER_SCOPES = [
   "groups:read",
 ];
 
-const SLACK_APP_MANIFEST = {
-  display_information: {
-    name: "Ami",
-    description: "Ami",
-    background_color: "#131315",
-  },
-  oauth_config: { scopes: { user: SLACK_USER_SCOPES } },
-  settings: { org_deploy_enabled: false, socket_mode_enabled: false, token_rotation_enabled: false },
-};
+// Ami only ever acts as the user (xoxp- token), but Slack's "Install to
+// Workspace" button refuses to run without a bot user ("Ami doesn't have a bot
+// user to install"). A bot user only exists if the manifest declares at least
+// one bot scope, so we add a single harmless read-only one. We never use the
+// resulting xoxb- token.
+const SLACK_BOT_SCOPES = ["users:read"];
 
-const SLACK_CREATE_APP_URL = `https://api.slack.com/apps?new_app=1&manifest_json=${encodeURIComponent(
-  JSON.stringify(SLACK_APP_MANIFEST),
-)}`;
+// Slack's create-app deep link (both `manifest_json` and `manifest_yaml`
+// variants) silently drops the manifest and just lands you on "Your Apps"
+// preconfigured with nothing — so instead we hand the user the manifest to
+// paste into Slack's "From a manifest" flow. YAML is what that box expects;
+// the structure is fixed, so a tiny inline serializer beats pulling in a dep.
+// (`#131315` must be quoted — a bare `#` starts a YAML comment.)
+const SLACK_APP_MANIFEST_YAML = [
+  "display_information:",
+  "  name: Ami",
+  "  description: Ami",
+  '  background_color: "#131315"',
+  // Bot scopes alone aren't enough — Slack's manifest validator demands the
+  // bot user itself be declared under features.bot_user ("OAuth needs bot
+  // user") before any bot: scope is accepted.
+  "features:",
+  "  bot_user:",
+  "    display_name: ami",
+  "    always_online: false",
+  "oauth_config:",
+  "  scopes:",
+  "    bot:",
+  ...SLACK_BOT_SCOPES.map((s) => `      - ${s}`),
+  "    user:",
+  ...SLACK_USER_SCOPES.map((s) => `      - ${s}`),
+  "settings:",
+  "  org_deploy_enabled: false",
+  "  socket_mode_enabled: false",
+  "  token_rotation_enabled: false",
+].join("\n");
+
+// The plain create-app page. The user clicks "From a manifest", picks a
+// workspace, and pastes the manifest below.
+const SLACK_CREATE_APP_URL = "https://api.slack.com/apps?new_app=1";
 
 export const slackConnector: AmiConnector = {
   id: "slack",
@@ -192,8 +219,9 @@ export const slackConnector: AmiConnector = {
       { key: "token", label: "User OAuth token (xoxp-…)", placeholder: "xoxp-…", secret: true },
     ],
     setupHelp:
-      "Click the button below — Slack opens with Ami's app fully preconfigured (all permissions included). Click Create → pick your workspace → Install to Workspace → Allow. Slack then shows a \"User OAuth Token\" starting with xoxp- on the same page: copy it and paste it here. One-time setup; the token is stored only on this machine.",
-    setupActions: [{ label: "Create the Slack app", url: SLACK_CREATE_APP_URL }],
+      "Open Slack's app creator, choose \"From a manifest\", pick your workspace, and paste the manifest below (it includes every permission Ami needs). Click Create → Install App → Install/Reinstall to Workspace → Allow. Slack then shows a \"User OAuth Token\" starting with xoxp- on the same page: copy it and paste it here. One-time setup; the token is stored only on this machine.",
+    setupActions: [{ label: "Open Slack app creator", url: SLACK_CREATE_APP_URL }],
+    setupSnippet: { label: "App manifest", content: SLACK_APP_MANIFEST_YAML },
   },
   async validateAuth(auth) {
     if (auth.token?.startsWith("xoxb-")) {
